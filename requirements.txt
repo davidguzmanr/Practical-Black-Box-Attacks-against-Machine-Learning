@@ -1,3 +1,4 @@
+docstring-parser==0.15
 foolbox==3.3.3
 jsonargparse==4.15.1
 pytorch-lightning==1.7.7

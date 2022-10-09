@@ -5,7 +5,7 @@ model:
 trainer:
     gpus: 1
     max_epochs: 50
-    deterministic: true
+    # deterministic: true
     callbacks:
         - class_path: pytorch_lightning.callbacks.EarlyStopping
           init_args:
