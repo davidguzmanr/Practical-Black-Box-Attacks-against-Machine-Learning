@@ -1,0 +1,4 @@
+foolbox==3.3.3
+jsonargparse==4.15.1
+pytorch-lightning==1.7.7
+torchinfo==1.7.0

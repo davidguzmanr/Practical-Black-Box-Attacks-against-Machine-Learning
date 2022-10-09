@@ -127,3 +127,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# PyTorch Lightning stuff
+src/black_box/lightning_logs
+src/black_box/data
+Dev.ipynb

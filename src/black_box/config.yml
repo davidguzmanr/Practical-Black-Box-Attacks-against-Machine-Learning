@@ -1,0 +1,14 @@
+seed_everything: 42
+model:
+    batch_size: 128
+    lr: 0.001
+trainer:
+    gpus: 1
+    max_epochs: 50
+    deterministic: true
+    callbacks:
+        - class_path: pytorch_lightning.callbacks.EarlyStopping
+          init_args:
+              monitor: val_loss
+              patience: 10 
+              verbose: true
