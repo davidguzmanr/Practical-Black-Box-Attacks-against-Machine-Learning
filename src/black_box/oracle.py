@@ -22,6 +22,6 @@ def get_oracle_prediction(x: Tensor):
 
     Returns
     -------
-    int, label of the predicted image using the oracle.
+    Tensor, labels of the predicted images using the oracle.
     """
     return ORACLE(x).softmax(dim=-1).argmax(dim=-1)

@@ -132,3 +132,6 @@ dmypy.json
 src/black_box/lightning_logs
 src/black_box/data
 Dev.ipynb
+
+# Data
+src/substitute/data/
