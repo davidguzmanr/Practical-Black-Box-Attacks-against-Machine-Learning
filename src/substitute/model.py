@@ -14,6 +14,7 @@ from torchvision.utils import save_image
 from tqdm.notebook import tqdm, trange
 from typing import Optional
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class SubstituteModel(nn.Module):
     def __init__(self, num_classes: int = 10) -> None:
@@ -52,7 +53,7 @@ class SubstituteModel(nn.Module):
         Creates an instance of the Adam optimizer and sets it as an attribute
         for this class.
         """
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=1e-2)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
 
     def get_loss(
         self, prediction_batch: torch.Tensor, class_batch: torch.Tensor
@@ -85,6 +86,7 @@ class SubstituteModel(nn.Module):
         return loss
 
     def _fit_batch(self, images_batch, class_batch):
+        images_batch, class_batch = images_batch.to(device), class_batch.to(device) 
         self.optimizer.zero_grad()
         pred_batch = self(images_batch)
         loss = self.get_loss(pred_batch, class_batch)
@@ -188,6 +190,8 @@ class SubstituteModel(nn.Module):
 
         for i in trange(len(substitute_dataset), desc="Jacobian dataset augmentation", leave=False):
             image, label = substitute_dataset.__getitem__(i)
+            image, label = image.to(device), label.to(device)
+            
             jacobian = torch.autograd.functional.jacobian(self, image.unsqueeze(dim=1)).squeeze()
             new_image = image + lambda_ * torch.sign(jacobian[label])
 
