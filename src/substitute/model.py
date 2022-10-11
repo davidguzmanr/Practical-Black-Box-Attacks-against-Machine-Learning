@@ -35,8 +35,6 @@ class SubstituteModel(nn.Module):
             nn.Linear(32, num_classes),
         )
 
-        self.add_optimizer()
-
     def forward(self, x: Tensor) -> Tensor:
         out = self.conv(x)
         out = torch.flatten(out, 1)
@@ -46,14 +44,14 @@ class SubstituteModel(nn.Module):
         # in that case I have to change the loss but I am not sure which way to go
         return out
 
-    def add_optimizer(self):
+    def add_optimizer(self, lr: float =1e-3):
         """
         Sets up the optimizer.
 
         Creates an instance of the Adam optimizer and sets it as an attribute
         for this class.
         """
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=lr)
 
     def get_loss(
         self, prediction_batch: torch.Tensor, class_batch: torch.Tensor
@@ -134,12 +132,10 @@ class SubstituteModel(nn.Module):
             trn_loss += loss.item() * images.shape[0]
             trn_done += images.shape[0]
 
-            pbar.set_postfix({"loss": "%.3g" % (trn_loss / trn_done)})
-
         return trn_loss / trn_done
 
     def train_model(
-        self, train_data: DataLoader, epochs: int, batch_size: Optional[int] = None
+        self, train_data: DataLoader, epochs: int, lr: float = 1e-3, batch_size: Optional[int] = None
     ) -> float:
         """
         Fit on training data for an epoch.
@@ -152,9 +148,11 @@ class SubstituteModel(nn.Module):
         epoch: int
             Epoch
         """
+        self.add_optimizer(lr)
+
         trnbar_fmt = "{l_bar}{bar}| [{elapsed}<{remaining}, {rate_fmt}{postfix}]"
 
-        for epoch in tqdm(
+        pbar = tqdm(
             range(epochs),
             desc="Training",
             total=epochs,
@@ -162,8 +160,11 @@ class SubstituteModel(nn.Module):
             unit="epoch",
             position=0,
             bar_format=trnbar_fmt,
-        ):
+        )
+
+        for epoch in pbar:
             train_loss = self.train_epoch(train_data, epoch)
+            pbar.set_postfix({"loss": "%.4g" % (train_loss)})
 
     def jacobian_dataset_augmentation(
         self, substitute_dataset: Dataset, p: int, lambda_: float, root_dir: str
@@ -195,6 +196,10 @@ class SubstituteModel(nn.Module):
             jacobian = torch.autograd.functional.jacobian(self, image.unsqueeze(dim=1)).squeeze()
             new_image = image + lambda_ * torch.sign(jacobian[label])
 
-            # It seems that saving in png loses some information
-            save_image(image, fp=f"{root_dir}/{i}.png")
-            save_image(new_image, fp=f"{root_dir}/{i + len(substitute_dataset)}.png")
+            # If I save the image in png I lose some information and I can't see the perturbation
+            # save_image(image, fp=f"{root_dir}/{i}.png")
+            # save_image(new_image, fp=f"{root_dir}/{i + len(substitute_dataset)}.png")
+
+            torch.save(image, f"{root_dir}/{i}.pt")
+            torch.save(new_image, f"{root_dir}/{i + len(substitute_dataset)}.pt")
+
