@@ -134,4 +134,10 @@ src/black_box/data
 Dev.ipynb
 
 # Data
-src/substitute/data/
+src/substitute/data/training_set_1
+src/substitute/data/training_set_2
+src/substitute/data/training_set_3
+src/substitute/data/training_set_4
+src/substitute/data/training_set_5
+src/substitute/data/training_set_6
+src/substitute/data/training_set_7

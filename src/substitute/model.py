@@ -11,7 +11,7 @@ from torch import Tensor
 from torch.utils.data import DataLoader, Dataset
 from torchvision.utils import save_image
 
-from tqdm import tqdm
+from tqdm.notebook import tqdm, trange
 from typing import Optional
 
 
@@ -52,7 +52,7 @@ class SubstituteModel(nn.Module):
         Creates an instance of the Adam optimizer and sets it as an attribute
         for this class.
         """
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=1e-2)
 
     def get_loss(
         self, prediction_batch: torch.Tensor, class_batch: torch.Tensor
@@ -93,7 +93,9 @@ class SubstituteModel(nn.Module):
 
         return loss
 
-    def train_epoch(self, train_data: DataLoader, epoch: int, train_progbar: tqdm, batch_size: Optional[int] = None) -> float:
+    def train_epoch(
+        self, train_data: DataLoader, epoch: int, batch_size: Optional[int] = None
+    ) -> float:
         """
         Fit on training data for an epoch.
 
@@ -110,7 +112,11 @@ class SubstituteModel(nn.Module):
         total = len(train_data) * batch_size if batch_size else len(train_data)
         bar_fmt = "{l_bar}{bar}| [{elapsed}<{remaining}{postfix}]"
 
-        with tqdm(
+        trn_loss = 0
+        trn_done = 0
+
+        pbar = tqdm(
+            train_data,
             desc=desc,
             total=total,
             leave=False,
@@ -119,21 +125,20 @@ class SubstituteModel(nn.Module):
             unit_scale=True,
             bar_format=bar_fmt,
             position=1,
-        ) as progbar:
-            trn_loss = 0
-            trn_done = 0
-            for (images, labels) in train_data:
-                loss = self._fit_batch(images, labels)
-                trn_loss += loss.item() * images.shape[0]
-                trn_done += images.shape[0]
+        )
 
-                progbar.set_postfix({"loss": "%.3g" % (trn_loss / trn_done)})
-                progbar.update(images.shape[0])
-                train_progbar.update(images.shape[0] / total)
+        for (images, labels) in pbar:
+            loss = self._fit_batch(images, labels)
+            trn_loss += loss.item() * images.shape[0]
+            trn_done += images.shape[0]
+
+            pbar.set_postfix({"loss": "%.3g" % (trn_loss / trn_done)})
 
         return trn_loss / trn_done
 
-    def train_model(self, train_data: DataLoader, epochs: int, batch_size: Optional[int] = None) -> float:
+    def train_model(
+        self, train_data: DataLoader, epochs: int, batch_size: Optional[int] = None
+    ) -> float:
         """
         Fit on training data for an epoch.
 
@@ -145,13 +150,22 @@ class SubstituteModel(nn.Module):
         epoch: int
             Epoch
         """
-        trnbar_fmt = '{l_bar}{bar}| [{elapsed}<{remaining}, {rate_fmt}{postfix}]'
-        with tqdm(desc='Training', total=epochs, leave=False, unit='epoch', position=0, bar_format=trnbar_fmt) as progbar:
-            for epoch in range(epochs):
-                train_loss = self.train_epoch(train_data, epoch, progbar)
+        trnbar_fmt = "{l_bar}{bar}| [{elapsed}<{remaining}, {rate_fmt}{postfix}]"
 
+        for epoch in tqdm(
+            range(epochs),
+            desc="Training",
+            total=epochs,
+            leave=False,
+            unit="epoch",
+            position=0,
+            bar_format=trnbar_fmt,
+        ):
+            train_loss = self.train_epoch(train_data, epoch)
 
-    def jacobian_dataset_augmentation(self, substitute_dataset: Dataset, p: int, lambda_: float, root_dir: str) -> None:
+    def jacobian_dataset_augmentation(
+        self, substitute_dataset: Dataset, p: int, lambda_: float, root_dir: str
+    ) -> None:
         """
         Jacobian dataset augmentation for 'substitute epoch' p + 1.
 
@@ -171,14 +185,12 @@ class SubstituteModel(nn.Module):
         """
         if not os.path.exists(root_dir):
             os.mkdir(root_dir)
-                
-        for i in range(len(substitute_dataset)):
+
+        for i in trange(len(substitute_dataset), desc="Jacobian dataset augmentation", leave=False):
             image, label = substitute_dataset.__getitem__(i)
             jacobian = torch.autograd.functional.jacobian(self, image.unsqueeze(dim=1)).squeeze()
             new_image = image + lambda_ * torch.sign(jacobian[label])
 
             # It seems that saving in png loses some information
-            save_image(image, fp=f'{root_dir}/{i}.png')
-            save_image(new_image, fp=f'{root_dir}/{i + len(substitute_dataset)}.png')
-            
-        
+            save_image(image, fp=f"{root_dir}/{i}.png")
+            save_image(new_image, fp=f"{root_dir}/{i + len(substitute_dataset)}.png")
