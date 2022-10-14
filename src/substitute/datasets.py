@@ -41,7 +41,7 @@ class SubstituteDataset(Dataset):
         get_predictions: Callable.
             Function to get the labels from the the oracle, that is, Oracle(x) = label.
 
-        normalize: Callable, default=None.
+        transform: Callable, default=None.
             Optional transformation to apply.
         """
 
@@ -62,10 +62,8 @@ class SubstituteDataset(Dataset):
         if self.transform:
             img = self.transform(img)
 
+        img_batch = img.unsqueeze(dim=0)
         # Get the prediction with the oracle
-        if len(img.shape) < 4:
-            label = self.get_predictions(img.unsqueeze(dim=0))
-        else:
-            label = self.get_predictions(img)
+        label = self.get_predictions(img_batch)
 
         return img, label

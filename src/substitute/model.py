@@ -31,7 +31,7 @@ class SubstituteModel(nn.Module):
 
         self.classifier = nn.Sequential(
             nn.Linear(64 * 24 * 24, 32),
-            nn.ReLU(True),
+            nn.ReLU(),
             nn.Linear(32, num_classes),
         )
 
@@ -194,12 +194,9 @@ class SubstituteModel(nn.Module):
             image, label = substitute_dataset.__getitem__(i)
             image, label = image.to(device), label.to(device)
             
-            jacobian = torch.autograd.functional.jacobian(self, image.unsqueeze(dim=1)).squeeze()
+            # The Jacobian has shape 10 x 28 x 28
+            jacobian = torch.autograd.functional.jacobian(self, image.unsqueeze(dim=0)).squeeze()
             new_image = image + lambda_ * torch.sign(jacobian[label])
-
-            # It converts to (0,1) when I save in png
-            # save_image(image, fp=f"{root_dir}/{i}.png")
-            # save_image(new_image, fp=f"{root_dir}/{i + len(substitute_dataset)}.png")
 
             torch.save(image, f"{root_dir}/{i}.pt")
             torch.save(new_image, f"{root_dir}/{i + len(substitute_dataset)}.pt")

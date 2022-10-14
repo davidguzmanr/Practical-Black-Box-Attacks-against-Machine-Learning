@@ -20,7 +20,8 @@ def get_oracle_prediction(x: Tensor):
     Paramaters
     ----------
     x: Tensor.
-        PyTorch tensor representing an MNIST image or batch of images.
+        PyTorch tensor representing an MNIST image or batch of images
+        in the range (0,1).
 
     Returns
     -------

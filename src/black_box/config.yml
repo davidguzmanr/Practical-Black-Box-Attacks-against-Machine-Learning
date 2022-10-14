@@ -3,9 +3,9 @@ model:
     batch_size: 128
     lr: 0.001
 trainer:
-    gpus: 1
+    gpus: 0
     max_epochs: 50
-    # deterministic: true
+    deterministic: true
     callbacks:
         - class_path: pytorch_lightning.callbacks.EarlyStopping
           init_args:

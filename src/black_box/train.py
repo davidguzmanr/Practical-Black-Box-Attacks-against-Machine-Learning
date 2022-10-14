@@ -39,7 +39,8 @@ class LightningMNIST(LightningModule):
         self.transform = transforms.Compose(
             [
                 transforms.ToTensor(),
-                transforms.Normalize((0.1307,), (0.3081,)),
+                # I won't normalize, since the attacker won't query the model with normalized inputs
+                # transforms.Normalize((0.1307,), (0.3081,)),
             ]
         )
 
