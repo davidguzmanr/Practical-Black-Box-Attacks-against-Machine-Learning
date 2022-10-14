@@ -141,3 +141,12 @@ src/substitute/data/training_set_4
 src/substitute/data/training_set_5
 src/substitute/data/training_set_6
 src/substitute/data/training_set_7
+
+# Substitute models
+models/substitute_model_p_0.pt
+models/substitute_model_p_1.pt
+models/substitute_model_p_2.pt
+models/substitute_model_p_3.pt
+models/substitute_model_p_4.pt
+models/substitute_model_p_5.pt
+models/substitute_model_p_6.pt

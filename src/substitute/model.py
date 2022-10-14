@@ -39,9 +39,9 @@ class SubstituteModel(nn.Module):
         out = self.conv(x)
         out = torch.flatten(out, 1)
         out = self.classifier(out)
+        # NOTE: In the paper they put the softmax in the net, so I will do it as well
+        out = F.log_softmax(out, dim=1)
 
-        # NOTE: Do I have to put the softmax here? In the paper they do that (or it seems like that),
-        # in that case I have to change the loss but I am not sure which way to go
         return out
 
     def add_optimizer(self, lr: float =1e-3):
@@ -51,7 +51,8 @@ class SubstituteModel(nn.Module):
         Creates an instance of the Adam optimizer and sets it as an attribute
         for this class.
         """
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=lr)
+        # Adam was not converging with the proposed lr=1e-2 of the paper
+        self.optimizer = torch.optim.SGD(self.parameters(), lr=lr, momentum=0.9)
 
     def get_loss(
         self, prediction_batch: torch.Tensor, class_batch: torch.Tensor
@@ -79,7 +80,7 @@ class SubstituteModel(nn.Module):
         Returns:
             loss: A scalar of dtype float
         """
-        loss = F.cross_entropy(prediction_batch, class_batch.squeeze())
+        loss = F.nll_loss(prediction_batch, class_batch.squeeze())
 
         return loss
 
@@ -196,7 +197,7 @@ class SubstituteModel(nn.Module):
             jacobian = torch.autograd.functional.jacobian(self, image.unsqueeze(dim=1)).squeeze()
             new_image = image + lambda_ * torch.sign(jacobian[label])
 
-            # If I save the image in png I lose some information and I can't see the perturbation
+            # It converts to (0,1) when I save in png
             # save_image(image, fp=f"{root_dir}/{i}.png")
             # save_image(new_image, fp=f"{root_dir}/{i + len(substitute_dataset)}.png")
 
