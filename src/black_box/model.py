@@ -7,6 +7,8 @@ import torch
 from torch import nn
 from torch import Tensor
 from torch.nn import functional as F
+
+
 class BlackBoxModel(nn.Module):
     def __init__(self, num_classes: int = 10) -> None:
         super(BlackBoxModel, self).__init__()
@@ -15,7 +17,6 @@ class BlackBoxModel(nn.Module):
             nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, stride=1),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=3, stride=2),
-
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=3, stride=2),
@@ -38,6 +39,6 @@ class BlackBoxModel(nn.Module):
         out = self.avgpool(out)
         out = torch.flatten(out, 1)
         out = self.classifier(out)
-        # out = F.log_softmax(out, dim=1)
+        out = F.log_softmax(out, dim=1)
 
         return out

@@ -43,8 +43,8 @@ class LightningMNIST(LightningModule):
         self.transform = transforms.Compose(
             [
                 transforms.ToTensor(),
-                # I won't normalize, since the attacker won't query the model with normalized inputs
-                # transforms.Normalize((0.1307,), (0.3081,)),
+                # I shouldn't normalize since the attacker won't query the model with normalized inputs
+                transforms.Normalize((0.1307,), (0.3081,)),
             ]
         )
 
@@ -55,8 +55,8 @@ class LightningMNIST(LightningModule):
         self.test_accuracy = Accuracy()
 
     def forward(self, x):
-        x = self.model(x)
-        return F.log_softmax(x, dim=1)
+        out = self.model(x)
+        return out
 
     def training_step(self, batch, batch_idx):
         x, y = batch
