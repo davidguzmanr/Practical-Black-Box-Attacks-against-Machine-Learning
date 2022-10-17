@@ -1,3 +1,6 @@
+"""
+Trained black-box model that will be used as an oracle.
+"""
 import os
 
 import torch

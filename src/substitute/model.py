@@ -1,6 +1,5 @@
 """
-BlackBoxModel architecture for MNIST dataset. It is kinda like AlexNet 
-but modified for MNIST. This will be used as an oracle for the substitute model.
+Substitute architecture for MNIST dataset.
 """
 import os
 
@@ -14,7 +13,8 @@ from torchvision.utils import save_image
 from tqdm.notebook import tqdm, trange
 from typing import Optional
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 class SubstituteModel(nn.Module):
     def __init__(self, num_classes: int = 10) -> None:
@@ -44,39 +44,25 @@ class SubstituteModel(nn.Module):
 
         return out
 
-    def add_optimizer(self, lr: float =1e-3):
+    def add_optimizer(self, lr: float = 1e-3):
         """
         Sets up the optimizer.
-
-        Creates an instance of the Adam optimizer and sets it as an attribute
-        for this class.
         """
-        # Adam was not converging with the proposed lr=1e-2 of the paper
+        # Adam was not converging with the proposed lr=1e-2 of the paper.
         self.optimizer = torch.optim.SGD(self.parameters(), lr=lr, momentum=0.9)
 
-    def get_loss(
-        self, prediction_batch: torch.Tensor, class_batch: torch.Tensor
-    ) -> torch.Tensor:
+    def get_loss(self, prediction_batch: Tensor, class_batch: Tensor) -> Tensor:
         """
-        Calculate the value of the loss function
+        Calculate the value of the loss function.
 
-        In this case we are using cross entropy loss. The loss will be averaged
-        over all examples in the current minibatch. Use F.cross_entropy to
-        compute the loss.
-        Note that we are not applying softmax to prediction_batch, since
-        F.cross_entropy handles that in a more efficient way. Excluding the
-        softmax in predictions won't change the expected transition. (Convince
-        yourself of this.)
-
-        Args:
-            prediction_batch:
-                A torch.Tensor of shape (batch_size, n_classes) and dtype float
-                containing the logits of the neural network, i.e., the output
-                predictions of the neural network without the softmax
-                activation.
-            class_batch:
-                A torch.Tensor of shape (batch_size,) and dtype int64
-                containing the ground truth class labels.
+        Parameters
+        prediction_batch: torch.Tensor
+            A of shape (batch_size, n_classes) and dtype float
+            containing the probabilities output of the neural network, i.e.,
+            with the softmax activation.
+        class_batch:
+            A torch.Tensor of shape (batch_size,) and dtype int64
+            containing the ground truth class labels.
         Returns:
             loss: A scalar of dtype float
         """
@@ -85,7 +71,7 @@ class SubstituteModel(nn.Module):
         return loss
 
     def _fit_batch(self, images_batch, class_batch):
-        images_batch, class_batch = images_batch.to(device), class_batch.to(device) 
+        images_batch, class_batch = images_batch.to(device), class_batch.to(device)
         self.optimizer.zero_grad()
         pred_batch = self(images_batch)
         loss = self.get_loss(pred_batch, class_batch)
@@ -122,7 +108,6 @@ class SubstituteModel(nn.Module):
             total=total,
             leave=False,
             miniters=1,
-            unit="ex",
             unit_scale=True,
             bar_format=bar_fmt,
             position=1,
@@ -136,7 +121,11 @@ class SubstituteModel(nn.Module):
         return trn_loss / trn_done
 
     def train_model(
-        self, train_data: DataLoader, epochs: int, lr: float = 1e-3, batch_size: Optional[int] = None
+        self,
+        train_data: DataLoader,
+        epochs: int,
+        lr: float = 1e-3,
+        batch_size: Optional[int] = None,
     ) -> float:
         """
         Fit on training data for an epoch.
@@ -181,8 +170,8 @@ class SubstituteModel(nn.Module):
         p: int
             Substitute epoch
 
-        lambda_: float
-            Size of the perturbation
+        lambda_: float.
+            Size of the perturbation.
 
         root_dir: str
             Directory where the images will be stored.
@@ -190,14 +179,16 @@ class SubstituteModel(nn.Module):
         if not os.path.exists(root_dir):
             os.mkdir(root_dir)
 
-        for i in trange(len(substitute_dataset), desc="Jacobian dataset augmentation", leave=False):
+        for i in trange(
+            len(substitute_dataset), desc="Jacobian dataset augmentation", leave=False
+        ):
             image, label = substitute_dataset.__getitem__(i)
             image, label = image.to(device), label.to(device)
-            
+
             # The Jacobian has shape 10 x 28 x 28
             jacobian = torch.autograd.functional.jacobian(self, image.unsqueeze(dim=0)).squeeze()
             new_image = image + lambda_ * torch.sign(jacobian[label])
 
+            # We save the tensors, some information was lost when saved as an image
             torch.save(image, f"{root_dir}/{i}.pt")
             torch.save(new_image, f"{root_dir}/{i + len(substitute_dataset)}.pt")
-

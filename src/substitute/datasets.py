@@ -1,3 +1,7 @@
+"""
+Class for the substitute dataset.
+"""
+
 import os
 
 import torch
@@ -25,10 +29,6 @@ INDICES = [item for sublist in list(SAMPLE.values()) for item in sublist]
 
 
 class SubstituteDataset(Dataset):
-    """
-    Dataset for the images in 'NIPS 2017: Non-targeted Adversarial Attack competition'.
-    """
-
     def __init__(
         self, root_dir: str, get_predictions: Callable, transform: Callable = None
     ):
@@ -39,7 +39,7 @@ class SubstituteDataset(Dataset):
             Directory with the images of the current substitute epoch.
 
         get_predictions: Callable.
-            Function to get the labels from the the oracle, that is, Oracle(x) = label.
+            Function to get the labels from the oracle, that is, Oracle(x) = label.
 
         transform: Callable, default=None.
             Optional transformation to apply.

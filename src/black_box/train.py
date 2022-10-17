@@ -1,3 +1,7 @@
+"""
+Utils to train the black box model on MNIST.
+"""
+
 import torch
 from torch import nn
 from torch.nn import functional as F
