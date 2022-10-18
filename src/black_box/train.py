@@ -43,8 +43,9 @@ class LightningMNIST(LightningModule):
         self.transform = transforms.Compose(
             [
                 transforms.ToTensor(),
-                # I shouldn't normalize since the attacker won't query the model with normalized inputs
-                transforms.Normalize((0.1307,), (0.3081,)),
+                # I shouldn't normalize since the attacker won't query the model with normalized inputs,
+                # although the attacker can always pass the images to (0,1) for the oracle
+                # transforms.Normalize((0.1307,), (0.3081,)),
             ]
         )
 
